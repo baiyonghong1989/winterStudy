@@ -1,0 +1,44 @@
+{
+  "name": "winterstudy",
+  "version": "1.0.0",
+  "description": "",
+  "main": ".prettierrc.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baiyonghong1989/winterStudy.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/baiyonghong1989/winterStudy/issues"
+  },
+  "homepage": "https://github.com/baiyonghong1989/winterStudy#readme",
+  "devDependencies": {
+    "eslint": "7.6.0",
+    "eslint-config-prettier": "8.3.0",
+    "eslint-plugin-prettier": "3.3.1",
+    "eslint-plugin-unused-imports": "1.1.4",
+    "husky": "4.3.8",
+    "lint-staged": "11.1.2",
+    "prettier": "2.3.2",
+    "stylelint": "13.13.1",
+    "stylelint-config-prettier": "8.0.2",
+    "stylelint-config-recess-order": "2.5.0",
+    "stylelint-config-standard": "22.0.0",
+    "stylelint-prettier": "1.2.0"
+  },
+  "lint-staged": {
+    "src/app/**/*.css": [
+      "stylelint --fix"
+    ],
+    "src/app/**/*.js": [
+      "eslint --fix"
+    ],
+    "src/app/**/*.{html,ts,less,js}": [
+      "prettier --write"
+    ]
+  }
+}
