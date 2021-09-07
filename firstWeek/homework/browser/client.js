@@ -1,4 +1,5 @@
 const net = require('net');
+const parser = require('./parser');
 class ChunkedBodyParser {
   constructor() {
     this.WAITING_LENGTH = 0;
@@ -162,7 +163,6 @@ class Request {
         );
       }
       connection.on('data', (data) => {
-        console.log(data.toString());
         parser.receive(data.toString());
         if (parser.isFinished) {
           resolve(parser.response);
@@ -198,5 +198,6 @@ void (async function () {
     },
   });
   let resp = await req.send();
-  console.log(resp);
+  let dom = parser.parseHTML(resp.body);
+  console.log(dom);
 })();
