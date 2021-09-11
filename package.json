@@ -40,5 +40,8 @@
     "src/app/**/*.{html,ts,less,js}": [
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "css": "^3.0.0"
   }
 }

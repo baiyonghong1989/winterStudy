@@ -133,7 +133,7 @@ class Request {
     Object.assign(this, options);
     this.method = options.method || 'GET';
     this.host = options.host;
-    this.port = options.port || 80;
+    this.port = options.port || 888;
     this.path = options.path || '/';
     this.headers = options.headers || {};
     this.headers['Content-Type'] = this.headers['Content-Type'] || 'application/x-www-form-urlencoded';
@@ -188,7 +188,7 @@ void (async function () {
   let req = new Request({
     method: 'POST',
     host: 'localhost',
-    port: '80',
+    port: '888',
     path: '/',
     headers: {
       ['X-HD-CSRF-TOKEN']: 'xfawretgfawe',
