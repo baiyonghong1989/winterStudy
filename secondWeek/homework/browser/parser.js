@@ -241,12 +241,10 @@ function emit(token) {
     cssRules.push(...ast.stylesheet.rules);
   }
   function computeCss(element) {
-    console.log('compute css for element', element);
     let elements = [...stack].reverse();
     element.computedStyle = element.computedStyle || {};
     for (let rule of cssRules) {
       let selectorParts = rule.selectors[0].split(' ').reverse();
-      console.log(selectorParts);
       if (!match(element, selectorParts[0])) {
         continue;
       }
@@ -258,11 +256,55 @@ function emit(token) {
         }
       }
       if (j >= selectorParts.length) {
-        matched = true;
-        console.log('element', element, 'matched rule:', rule);
+        // matched
+        let sp = getSpecificity(rule.selectors[0]);
+        var computedStyle = element.computedStyle;
+        for (let declaration of rule.declarations) {
+          computedStyle[declaration.property] = computedStyle[declaration.property] || {};
+          if (!computedStyle[declaration.property].specificity) {
+            computedStyle[declaration.property].value = declaration.value;
+            computedStyle[declaration.property].specificity = sp;
+          } else if (compare(computedStyle[declaration.property].specificity, sp) < 0) {
+            computedStyle[declaration.property].value = declaration.value;
+            computedStyle[declaration.property].specificity = sp;
+          }
+        }
+        console.log(element.computedStyle);
       }
     }
+    function compare(sp1, sp2) {
+      return sp1[0] - sp2[0] || sp1[1] - sp2[1] || sp1[2] - sp2[2] || sp1[3] - sp2[3];
+    }
+    function getSpecificity(selector) {
+      let p = [0, 0, 0, 0];
+      if (selector[0] === '#') {
+        p[1] += 1;
+      } else if (selector[0] === '.') {
+        p[2] += 1;
+      } else {
+        p[3] += 1;
+      }
+      return p;
+    }
     function match(element, selector) {
+      if (!selector || !element.attributes) {
+        return false;
+      }
+      if (selector[0] === '#') {
+        let attr = element.attributes.filter((attr) => attr.name === 'id')[0];
+        if (attr && attr.value === selector.slice(1)) {
+          return true;
+        }
+      } else if (selector[0] === '.') {
+        let attr = element.attributes.filter((attr) => attr.name === 'class')[0];
+        if (attr && attr.value.split(' ').includes(selector.slice(1))) {
+          return true;
+        }
+      } else {
+        if (element.tagName === selector) {
+          return true;
+        }
+      }
       return false;
     }
   }

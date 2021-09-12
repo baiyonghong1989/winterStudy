@@ -1,4 +1,5 @@
 const net = require('net');
+const parser = require('./parser');
 class ChunkedBodyParser {
   constructor() {
     this.WAITING_LENGTH = 0;
@@ -132,7 +133,7 @@ class Request {
     Object.assign(this, options);
     this.method = options.method || 'GET';
     this.host = options.host;
-    this.port = options.port || 80;
+    this.port = options.port || 888;
     this.path = options.path || '/';
     this.headers = options.headers || {};
     this.headers['Content-Type'] = this.headers['Content-Type'] || 'application/x-www-form-urlencoded';
@@ -162,7 +163,6 @@ class Request {
         );
       }
       connection.on('data', (data) => {
-        console.log(data.toString());
         parser.receive(data.toString());
         if (parser.isFinished) {
           resolve(parser.response);
@@ -188,7 +188,7 @@ void (async function () {
   let req = new Request({
     method: 'POST',
     host: 'localhost',
-    port: '80',
+    port: '888',
     path: '/',
     headers: {
       ['X-HD-CSRF-TOKEN']: 'xfawretgfawe',
@@ -198,5 +198,6 @@ void (async function () {
     },
   });
   let resp = await req.send();
-  console.log(resp);
+  let dom = parser.parseHTML(resp.body);
+  console.log(dom);
 })();
