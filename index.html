@@ -5,17 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
   </head>
-  <body>
-    <div class="testStyle">test1</div>
-  </body>
   <style>
-    div.testStyle {
-      width: 200px;
+    div.flexDiv {
+      display: flex;
+      width: 500px;
       height: 300px;
-      background-color: rgb(189, 120, 120);
+    }
+    .item1 {
+      width: 300px;
+      background-color: aqua;
+      border: 1px solid red;
+    }
+    .item2 {
+      flex: 1;
     }
     body {
       font-size: 18px;
     }
   </style>
+  <body>
+    <div class="flexDiv">
+      <div class="item1">item1</div>
+      <div class="item2">item1</div>
+    </div>
+  </body>
 </html>
