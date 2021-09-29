@@ -34,8 +34,6 @@
         constructor(source, flag, root = 'root') {
           this.table = new Map();
           this.regExp = new RegExp(this.compileRegExp(source, root, 0).source, flag);
-          console.log(this)
-          console.log(this.regExp)
         }
         compileRegExp(source, name, start) {
           if (source[name] instanceof RegExp) {
@@ -61,7 +59,7 @@
           let r = this.regExp.exec(string);
           for (let i =1;i<r.length;i++){
             if (r[i] !== void 0){
-              console.log(r[i])
+              console.log(r[0]);
               r[this.table.get(i-1)] = r[i];
             }
           }
@@ -78,7 +76,7 @@
         let regexp = new XRegExp(regexpMap,"g","InputElement");
         while (regexp.lastIndex < str.length) {
           let r = regexp.exec(str);
-          document.write(getHightDom(r));
+          document.querySelector('pre').append(getHightDom(r));
           if (!r[0].length){
             break;
           }
@@ -99,13 +97,15 @@
           Identifier:'#ecec24',
           Punctuator: 'white'
         }
+        let spanDom = document.createElement('span');
+        spanDom.innerText = content
         Object.keys(colorMap).forEach((val)=>{
           if (execResult[val]){
-            content = `<span style="color:${colorMap[val]}">${content}</span>`
+            spanDom.style.color = colorMap[val];
             return false;
           }
         })
-        return content;
+        return spanDom;
       }
       scan(`
       /**
