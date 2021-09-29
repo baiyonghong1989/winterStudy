@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <style>
+      body {
+        background-color: black;
+        font-size: 20px;
+      }
+    </style>
+    <pre>
+    <script>
+      let regexpMap = {
+        InputElement: '<WhiteSpace>|<LineTerminator>|<Comments>|<Token>',
+        WhiteSpace: / /,
+        LineTerminator: /\n/,
+        Comments: /\/\*(?:[^*]|\*[^\/])*\*\/|\/\/[^\n]*/,
+        Token: '<Literal>|<Keywords>|<Identifier>|<Punctuator>',
+        Literal: '<NumericLiteral>|<BooleanLiteral>|<StringLiteral>|<NullLiteral>',
+        NumericLiteral: /(?:[1-9][0-9]*|0)(?:\.[0-9]+)?/,
+        BooleanLiteral: /true|false/,
+        StringLiteral: /\"(?:[^\n]|\\[\s\S])*\"|\'(?:[^\n]|\\[\s\S])*\'/,
+        NullLiteral: /null/,
+        Keywords: /if|else|for|function|let/,
+        Identifier: /[a-zA-Z_$][a-zA-Z0-9_$]*/,
+        Punctuator: /\+|\,|\?|\:|\{|\{|\}|\.|\(|\)|\=|\<|\+\+|\=\=|\=\>|\*|\[|\]|;/,
+      };
+      class XRegExp {
+        constructor(source, flag, root = 'root') {
+          this.table = new Map();
+          this.regExp = new RegExp(this.compileRegExp(source, root, 0).source, flag);
+          console.log(this)
+          console.log(this.regExp)
+        }
+        compileRegExp(source, name, start) {
+          if (source[name] instanceof RegExp) {
+            return {
+              source: source[name].source,
+              length: 0,
+            };
+          }
+          let length = 0;
+          let regExp = source[name].replace(/\<([^>]+)\>/g, (str, $1) => {
+            this.table.set(start+length, $1);
+            ++length;
+            let r = this.compileRegExp(source,$1,start+length);
+            length+= r.length;
+            return "(" + r.source + ")";
+          });
+          return {
+            source: regExp,
+            length: length
+          }
+        }
+        exec(string){
+          let r = this.regExp.exec(string);
+          for (let i =1;i<r.length;i++){
+            if (r[i] !== void 0){
+              console.log(r[i])
+              r[this.table.get(i-1)] = r[i];
+            }
+          }
+          return r;
+        }
+        get lastIndex(){
+          return this.regExp.lastIndex;
+        }
+        set lastIndex(value){
+          return this.regExp.lastIndex = value;
+        }
+      }
+      function scan(str) {
+        let regexp = new XRegExp(regexpMap,"g","InputElement");
+        while (regexp.lastIndex < str.length) {
+          let r = regexp.exec(str);
+          document.write(getHightDom(r));
+          if (!r[0].length){
+            break;
+          }
+        }
+      }
+      /**
+       * @desc 高亮代码
+       *
+      */
+      function getHightDom(execResult){
+        let content = execResult[0];
+        let colorMap = {
+          Comments: '#77e811',
+          NumericLiteral: "#caf4ef",
+          StringLiteral: '#eea00ddb',
+          Literal: "#78baff",
+          Keywords: '#78baff',
+          Identifier:'#ecec24',
+          Punctuator: 'white'
+        }
+        Object.keys(colorMap).forEach((val)=>{
+          if (execResult[val]){
+            content = `<span style="color:${colorMap[val]}">${content}</span>`
+            return false;
+          }
+        })
+        return content;
+      }
+      scan(`
+      /**
+       * @desc 高亮代码
+       *
+      */
+      function getHightDom(execResult){
+        let content = execResult[0];
+        let colorMap = {
+          Comments: 'green',
+          Literal: 'black',
+          Keywords: 'blue',
+          Identifier:'yellow',
+        }
+        Object.keys(colorMap).forEach((val)=>{
+          if (execResult[val]){
+            content = '<span style="color:"></span>'
+            return false;
+          }
+        })
+        return content;
+      }
+      `);
+    </script>
+    </pre>
+  </body>
+</html>

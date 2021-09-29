@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <pre>
+    <script>
+      let regexpMap = {
+        InputElement: '<WhiteSpace>|<LineTerminator>|<Comments>|<Token>',
+        WhiteSpace: / /,
+        LineTerminator: /\n/,
+        Comments: /\/\*(?:[^*]|\*[^\/])*\*\/|\/\/[^\n]*/,
+        Token: '<Literal>|<Keywords>|<Identifier>|<Punctuator>',
+        Literal: '<NumericLiteral>|<BooleanLiteral>|<StringLiteral>|<NullLiteral>',
+        NumericLiteral: /(?:[1-9][0-9]*|0)(?:\.[0-9]+)?/,
+        BooleanLiteral: /true|false/,
+        StringLiteral: /\"(?:[^\n]|\\[\s\S])*\"|\'(?:[^\n]|\\[\s\S])*\'/,
+        NullLiteral: /null/,
+        Keywords: /if|else|for|function|let/,
+        Identifier: /[a-zA-Z_$][a-zA-Z0-9_$]*/,
+        Punctuator: /\+|\,|\?|\:|\{|\{|\}|\.|\(|\)|\=|\<|\+\+|\=\=|\=\>|\*|\[|\]|;/,
+      };
+      function compileRegExp(xregexp, name) {
+        if (xregexp[name] instanceof RegExp) {
+          return xregexp[name].source;
+        }
+        let regexp = xregexp[name].replace(/\<([^>]+)\>/g, (str, $1) => {
+          return compileRegExp(xregexp, $1);
+        });
+        return regexp;
+      }
+      function scan(str) {
+        let reg1 = compileRegExp(regexpMap, 'InputElement');
+        debugger;
+        let regexp = new RegExp(compileRegExp(regexpMap, 'InputElement'), 'g');
+        while (regexp.lastIndex < str.length) {
+          let r = regexp.exec(str);
+          console.log(r[0]);
+          document.write(r[0]);
+          if (!r[0]){
+            break;
+          }
+        }
+      }
+      scan(`
+        // haha
+        let i =0;
+        if (i == 0){
+          i = 9;
+        }
+      `);
+    </script>
+    </pre>
+  </body>
+</html>
