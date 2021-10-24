@@ -52,7 +52,6 @@ export class Evaluator {
     return node.value;
   }
   ObjectLiteral(node) {
-    console.log('haha');
     if (node.children.length === 2) {
       return {};
     }
