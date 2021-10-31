@@ -9,9 +9,15 @@
       import { Evaluator } from './evaluator.js';
       import { parse } from './syntaxParser.js';
       let source = `
-        a = 10;
-        while (a) {
-          a = a - 1;
+        let x ;
+        x = 1;
+        function a(){
+          log(x);
+        }
+        {
+          let x;
+          x = 2;
+          a();
         }
         `;
       let tree = parse(source);

@@ -4,26 +4,36 @@ export class Reference {
     this.property = property;
   }
   get() {
-    return this.object[this.property];
+    return this.object.get(this.property);
   }
   set(value) {
-    this.object[this.property] = value;
+    this.object.set(this.property,value);
   }
 }
 
 export function getRefVal(ref) {
   if (ref instanceof Reference) {
-    return getRefVal(ref.get());
+    return ref.get();
   } else {
-    return (ref || {}).value || ref;
+    return ref;
+  }
+}
+
+export function getPrimitiveVal(ref){
+  if (ref instanceof Reference){
+    return getPrimitiveVal(ref.get())
+  } else if (ref instanceof JSValue){
+    return ref.value;
   }
 }
 
 export function getRefBoolean(ref) {
   if (ref instanceof Reference) {
-    return ref.get().toBoolean().value;
-  } else {
-    return ((ref || {}).value || ref).toBoolean().value;
+    return getRefBoolean(ref.get());
+  } else if (ref instanceof JSBoolean){
+    return ref.value;
+  } else if (ref instanceof JSValue){
+    return ref.toBoolean().value;
   }
 }
 export class Realm {
@@ -95,6 +105,9 @@ export class JSString extends JSValue {
   constructor(characters) {
     super();
     this.characters = characters;
+  }
+  get value(){
+    return this.characters;
   }
   toString() {
     return this;
@@ -202,5 +215,49 @@ export class CompletionRecord {
     this.type = type || 'normal';
     this.value = value || new JSUndefined();
     this.target = target || null;
+  }
+}
+
+export class EnvironmentRecord {
+  constructor(outer) {
+    this.variables = new Map();
+    this.outer = outer || null;
+  }
+  add(name){
+    this.variables.set(name, new JSUndefined);
+  }
+  get(name){
+    if (this.variables.has(name)){
+      return this.variables.get(name);
+    } else if (this.outer){
+      return this.outer.get(name)
+    } else  {
+      return new JSUndefined
+    }
+
+  }
+  set(name, value = new JSUndefined){
+    if (this.variables.has(name)){
+      return this.variables.set(name,value);
+    } else if (this.outer){
+      return this.outer.set(name,value)
+    } else  {
+      return this.variables.set(name,value);
+    }
+  }
+}
+export class ObjectEnvironmentRecord {
+  constructor(object,outer) {
+    this.object = object;
+    this.outer = outer || null;
+  }
+  add(name){
+    this.object.set(name, new JSUndefined);
+  }
+  get(name){
+      return this.object.get(name)
+  }
+  set(name, value = new JSUndefined){
+      return this.object.set(name,value);
   }
 }

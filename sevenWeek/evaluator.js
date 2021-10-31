@@ -5,19 +5,45 @@ import {
   getRefVal,
   getRefBoolean,
   JSBoolean,
-  JSNull,
-  JSObject,
-  JSString,
-  JSSymbol,
   JSUndefined,
   JSNumber,
+  CompletionRecord,
+  ObjectEnvironmentRecord,
+  EnvironmentRecord,
+  JSObject,
+  getPrimitiveVal,
+  JSString,
 } from './runtime.js';
 
 export class Evaluator {
   constructor() {
     this.realm = new Realm();
-    this.globalObject = {};
-    this.ecs = [new ExecutionContext(this.realm, this.globalObject)];
+    this.globalObject = new Map();
+    // 全局注入log function
+    this.globalObject.set('log', new JSObject());
+    this.globalObject.get('log').call = (args) => {
+      console.log(args);
+    };
+
+    // 初始化顶层的执行环境，设置lexicalEnvironment 和 variableEnvironment 为全局初始map，顶层对象上层没有outer，所以使用ObjectEnvironmentRecord api初始化。
+    this.ecs = [
+      new ExecutionContext(
+        this.realm,
+        new ObjectEnvironmentRecord(this.globalObject),
+        new ObjectEnvironmentRecord(this.globalObject),
+      ),
+    ];
+  }
+
+  // module 的解析，需要在每个module解析时新建执行环境。将当前执行环境的顶层执行环节注入到module的环境中。
+  evaluateModule(node){
+    let globalEC = this.ecs[0];
+    let newEC = new ExecutionContext(this.realm,
+      new EnvironmentRecord(globalEC.lexicalEnvironment),
+      new EnvironmentRecord(globalEC.lexicalEnvironment));
+    this.ecs.push(newEC);
+    this.evaluate(node);
+    this.ecs.pop();
   }
   evaluate(node) {
     console.log(node);
@@ -32,8 +58,12 @@ export class Evaluator {
     if (node.children.length === 1) {
       return this.evaluate(node.children[0]);
     } else {
-      this.evaluate(node.children[0]);
-      return this.evaluate(node.children[1]);
+      let record = this.evaluate(node.children[0]);
+      if (record.type === 'normal') {
+        return this.evaluate(node.children[1]);
+      } else {
+        return record;
+      }
     }
   }
   Statement(node) {
@@ -45,23 +75,57 @@ export class Evaluator {
       return this.evaluate(node.children[4]);
     }
   }
+  FunctionDeclaration(node) {
+    let name = node.children[1].name;
+    let code = node.children[node.children.length - 2];
+    let func = new JSObject();
+    func.call = (args) => {
+      let runningEC = this.ecs[this.ecs.length - 1];
+      let newEC = new ExecutionContext(
+        runningEC.realm,
+        new EnvironmentRecord(func.environment),
+        new EnvironmentRecord(func.environment),
+      );
+      this.ecs.push(newEC);
+      this.evaluate(code);
+      this.ecs.pop();
+    };
+    let runningEC = this.ecs[this.ecs.length - 1];
+    runningEC.lexicalEnvironment.add(name);
+    runningEC.lexicalEnvironment.set(name, func);
+    func.environment = runningEC.lexicalEnvironment;
+    return new CompletionRecord('normal');
+  }
   WhileStatement(node) {
     while (true) {
       console.count('id');
       let condition = this.evaluate(node.children[2]);
       if (getRefBoolean(condition)) {
-        this.evaluate(node.children[4]);
+        let record = this.evaluate(node.children[4]);
+        if (record.type === 'continue') {
+          continue;
+        } else if (record.type === 'break') {
+          return new CompletionRecord('normal');
+        }
       } else {
-        break;
+        return new CompletionRecord('normal');
       }
     }
   }
+  BreakStatement() {
+    return new CompletionRecord('break');
+  }
   VariableDeclaration(node) {
     let runningEC = this.ecs[this.ecs.length - 1];
-    runningEC.variableEnvironment[node.children[0].name];
+    runningEC.lexicalEnvironment.add(node.children[1].name);
+    return new CompletionRecord('normal', new JSUndefined());
   }
   ExpressionStatement(node) {
-    return this.evaluate(node.children[0]);
+    let result = this.evaluate(node.children[0]);
+    if (result instanceof Reference) {
+      result = result.get();
+    }
+    return new CompletionRecord('normal', result);
   }
   Expression(node) {
     return this.evaluate(node.children[0]);
@@ -71,9 +135,13 @@ export class Evaluator {
       return this.evaluate(node.children[0]);
     } else {
       if (node.children[1].type === '+') {
-        return getRefVal(this.evaluate(node.children[0])) + getRefVal(this.evaluate(node.children[2]));
+        return new JSNumber(
+          getPrimitiveVal(this.evaluate(node.children[0])) + getPrimitiveVal(this.evaluate(node.children[2])),
+        );
       } else if (node.children[1].type === '-') {
-        return new JSNumber(getRefVal(this.evaluate(node.children[0])) - getRefVal(this.evaluate(node.children[2])));
+        return new JSNumber(
+          getPrimitiveVal(this.evaluate(node.children[0])) - getPrimitiveVal(this.evaluate(node.children[2])),
+        );
       }
     }
     return this.evaluate(node.children[0]);
@@ -142,7 +210,7 @@ export class Evaluator {
         result.push(node.value[i]);
       }
     }
-    return result;
+    return new JSString(result);
   }
   BooleanLiteral(node) {
     if (node.value === 'false') {
@@ -191,7 +259,16 @@ export class Evaluator {
     if (node.children.length === 2) {
       return;
     }
-    return this.evaluate(node.children[1]);
+    let runningEC = this.ecs[this.ecs.length - 1];
+    let newEC = new ExecutionContext(
+      runningEC.realm,
+      new EnvironmentRecord(runningEC.lexicalEnvironment),
+      runningEC.variableEnvironment,
+    );
+    this.ecs.push(newEC);
+    let result = this.evaluate(node.children[1]);
+    this.ecs.pop();
+    return result;
   }
   AssignmentExpression(node) {
     if (node.children.length === 1) {
@@ -236,14 +313,32 @@ export class Evaluator {
       return cls.construct();
     }
   }
+  Arguments(node) {
+    if (node.children.length === 2) {
+      return [];
+    } else {
+      return this.evaluate(node.children[1]);
+    }
+  }
+  ArgumentList(node) {
+    if (node.children.length === 1) {
+      return [getRefVal(this.evaluate(node.children[0]))];
+    } else {
+      let result = this.evaluate(node.children[2]);
+      return this.evaluate(node.children[0]).concat(getRefVal(result));
+    }
+  }
   CallExpression(node) {
     if (node.children.length === 1) {
       return this.evaluate(node.children[0]);
     }
     if (node.children.length === 2) {
       let func = this.evaluate(node.children[0]);
-      // let args = this.evaluate(node.children[1]);
-      return func.call();
+      let args = this.evaluate(node.children[1]);
+      if (func instanceof Reference) {
+        func = func.get();
+      }
+      return func.call(args);
     }
   }
   MemberExpression(node) {
