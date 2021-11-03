@@ -1,0 +1,1 @@
+(()=>{"use strict";var e=function(e){let t=function(e){return e+12345}((new Date).getTime());return t+"12578"}()+12125;console.log(e)})();
