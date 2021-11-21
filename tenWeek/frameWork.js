@@ -8,31 +8,54 @@ export function createElement(type, attributes, ...children) {
   for (let attrName in attributes) {
     element.setAttribute(attrName, attributes[attrName]);
   }
-  for (let child of children) {
-    if (typeof child === 'string') {
-      child = new TextWrapper(child);
+  let procesChildren = (children) => {
+    for (let child of children) {
+      if (child instanceof Array){
+        procesChildren(child);
+        continue;
+      }
+      if (typeof child === 'string') {
+        child = new TextWrapper(child);
+      }
+      element.appendChild(child);
     }
-    element.appendChild(child);
   }
+  procesChildren(children);
+
   return element;
 }
 
+export const STATE = Symbol('state');
+export const ATTRIBUTE = Symbol('attirbute');
 export class Component{
-  constructor(type) {
-    this.root = document.createElement(type);
+  constructor() {
+    this[STATE] = Object.create(null);
+    this[ATTRIBUTE] = Object.create(null)
   }
   setAttribute(name, value) {
-    this.root.setAttribute(name, value);
+    this[ATTRIBUTE][name] = value;
   }
   appendChild(child) {
     child.mountTo(this.root);
   }
   mountTo(parent) {
+    if (!this.root){
+      this.render();
+    }
     parent.appendChild(this.root);
   }
+  render(){
+    return this.root;
+  }
+  triggerEvent(type,args){
+    this[ATTRIBUTE]['on'+type.replace(/^[\s\S]/,s=>s.toUpperCase())](new CustomEvent(type,{
+      detail:args
+    }));
+  }
 }
-class ElementWrapper {
+class ElementWrapper extends Component{
   constructor(type) {
+    super();
     this.root = document.createElement(type);
   }
   setAttribute(name, value) {

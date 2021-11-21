@@ -1,6 +1,7 @@
-import {createElement } from './frameWork';
-import {Carousel} from './carousel';
-import {Timeline,Animation} from './animation';
+import { createElement } from './frameWork.js';
+import { Carousel } from './Carousel.js';
+import { Button } from './Button.js';
+import { List } from './List.js';
 let imgList = [
   'https://developer.huawei.com/images/home/bbbs.jpg',
   'https://developer.huawei.com/images/new-content/home/new-1-x.jpg',
@@ -8,10 +9,20 @@ let imgList = [
   'https://developer.huawei.com/images/new-content/home/new-maoxiaozhi.jpg',
   'https://developer.huawei.com/images/new-content/home/new-ar.jpg',
 ];
-let carousel = <Carousel src={imgList} />;
-console.log(123);
-carousel.mountTo(document.body);
 
-let t1 = new Timeline();
-t1.start();
-t1.add(new Animation({},'a',0,100,1000,null));
+// let carousel = <Carousel src={imgList} onChange={event=>console.log(event.detail.position)} onClick={event=>console.log(event)} />;
+// carousel.mountTo(document.body);
+
+// let button = <Button>main</Button>;
+// button.mountTo(document.body);
+
+let list = (
+  <List data={imgList}>
+    {(record) => (
+      <div>
+        <img src={record}></img>
+      </div>
+    )}
+  </List>
+);
+list.mountTo(document.body);

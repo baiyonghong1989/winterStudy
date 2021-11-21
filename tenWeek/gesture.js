@@ -72,6 +72,7 @@ export class Recognizer {
     this.dispatcher = dispatcher;
   }
   start(point, context) {
+    this.dispatcher.dispatch('start', { clientX: point.clientX, clientY: point.clientY });
     context.points = [
       {
         t: Date.now(),
@@ -102,7 +103,7 @@ export class Recognizer {
       context.isTab = false;
       context.isVertical = Math.abs(dx) < Math.abs(dy);
       clearTimeout(context.handler);
-      this.dispatcher.dispatch('panStart', {
+      this.dispatcher.dispatch('pan', {
         startX: context.startX,
         startY: context.startY,
         clientX: point.clientX,
@@ -143,9 +144,19 @@ export class Recognizer {
         clientX: point.clientX,
         clientY: point.clientY,
         isVertical: context.isVertical,
-        isFlick:context.isFlick
+        isFlick: context.isFlick,
+        velocity:speed
       });
     }
+    this.dispatcher.dispatch('end', {
+      startX: context.startX,
+      startY: context.startY,
+      clientX: point.clientX,
+      clientY: point.clientY,
+      isVertical: context.isVertical,
+      isFlick: context.isFlick,
+      velocity:speed
+    });
   }
 
   cancel(point, context) {
@@ -155,7 +166,7 @@ export class Recognizer {
 }
 
 export class Dispatcher {
-  constructor(ele){
+  constructor(ele) {
     this.ele = ele;
   }
   dispatch(type, properties = Object.create(null)) {
@@ -168,6 +179,6 @@ export class Dispatcher {
   }
 }
 
-export function enableGesture(ele){
-    new Listener(ele,new Recognizer(new Dispatcher(ele)))
+export function enableGesture(ele) {
+  new Listener(ele, new Recognizer(new Dispatcher(ele)));
 }
