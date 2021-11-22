@@ -18,6 +18,7 @@ module.exports = class extends Generator {
       description: '',
       main: 'index.js',
       scripts: {
+        webpack: 'webpack',
         test: 'echo "Error: no test specified" && exit 1',
       },
       author: '',
@@ -28,10 +29,23 @@ module.exports = class extends Generator {
 
     this.fs.extendJSON(this.destinationPath('package.json'), pkgJson);
     this.npmInstall(['vue']);
-    this.npmInstall(['webpack', 'vue-loader'], { 'save-dev': true });
+    this.npmInstall(['webpack', 'vue-loader', 'babel-loader', 'css-loader', 'webpack-cli', 'vue-template-compiler'], {
+      'save-dev': true,
+    });
   }
 
-  copyTemplate() {
-    this.fs.copyTpl(this.templatePath('helloWorld.vue'), this.destinationPath('src/helloWorld.vue'));
+  async copyTemplate() {
+    const answer = await this.prompt([
+      {
+        type: 'input',
+        name: 'title',
+        message: 'Your title',
+        default: this.appname, // Default to current folder name
+      },
+    ]);
+    this.fs.copyTpl(this.templatePath('helloWorld.vue'), this.destinationPath('src/components/helloWorld.vue'));
+    this.fs.copyTpl(this.templatePath('index.html'), this.destinationPath('src/index.html'), answer);
+    this.fs.copyTpl(this.templatePath('main.js'), this.destinationPath('src/main.js'));
+    this.fs.copyTpl(this.templatePath('webpack.config.js'), this.destinationPath('webpack.config.js'));
   }
 };
