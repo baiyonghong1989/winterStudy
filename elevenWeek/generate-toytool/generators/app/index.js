@@ -18,8 +18,9 @@ module.exports = class extends Generator {
       description: '',
       main: 'index.js',
       scripts: {
-        webpack: 'webpack',
-        test: 'echo "Error: no test specified" && exit 1',
+        build: 'webpack --watch',
+        test: 'mocha --require @babel/register',
+        coverage: 'nyc mocha',
       },
       author: '',
       license: 'ISC',
@@ -29,11 +30,28 @@ module.exports = class extends Generator {
 
     this.fs.extendJSON(this.destinationPath('package.json'), pkgJson);
     this.npmInstall(['vue']);
-    this.npmInstall(['webpack', 'vue-loader', 'babel-loader', 'css-loader', 'webpack-cli', 'vue-template-compiler'], {
-      'save-dev': true,
-    });
+    this.npmInstall(
+      [
+        'webpack',
+        'vue-loader',
+        'babel-loader',
+        'css-loader',
+        'webpack-cli',
+        'vue-template-compiler',
+        'copy-webpack-plugin',
+        '@babel/preset-env',
+        '@babel/register',
+        '@babel/core',
+        '@istanbuljs/nyc-config-babel',
+        'nyc',
+        'mocha',
+        'babel-plugin-istanbul',
+      ],
+      {
+        'save-dev': true,
+      },
+    );
   }
-
   async copyTemplate() {
     const answer = await this.prompt([
       {
@@ -47,5 +65,8 @@ module.exports = class extends Generator {
     this.fs.copyTpl(this.templatePath('index.html'), this.destinationPath('src/index.html'), answer);
     this.fs.copyTpl(this.templatePath('main.js'), this.destinationPath('src/main.js'));
     this.fs.copyTpl(this.templatePath('webpack.config.js'), this.destinationPath('webpack.config.js'));
+    this.fs.copyTpl(this.templatePath('.babelrc'), this.destinationPath('.babelrc'));
+    this.fs.copyTpl(this.templatePath('.nycrc'), this.destinationPath('.nycrc'));
+    this.fs.copyTpl(this.templatePath('test-case.js'), this.destinationPath('test/test-case.js'));
   }
 };

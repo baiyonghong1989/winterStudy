@@ -200,8 +200,6 @@ void (async function () {
     },
   });
   let resp = await req.send();
-  let dom = parser.parseHTML(resp.body);
+  let c = parser.parseHTML('<a href="https://time.geekbang.org">ffff</a>');
   let viewport = images(800, 600);
-  render(viewport, dom);
-  viewport.save('viewport.jpg');
 })();
