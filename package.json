@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "css": "^3.0.0",
-    "images": "^3.2.3"
+    "images": "^3.2.3",
+    "unzipper": "^0.10.11"
   }
 }
